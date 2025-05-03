@@ -1,0 +1,63 @@
+synthesis.clock_gating_mode: "auto"
+synthesis.genus.phys_flow_effort: "high"
+
+vlsi.inputs.clocks: [
+  "PVT_0P8V_25C": [
+    {name: "clk", period: "2ns", uncertainty: "0.02ns"},
+  ],
+]
+
+vlsi.technology.extra_libraries_meta: append
+vlsi.technology.extra_libraries: 
+- library:
+    name: sp_4096x112m4s
+    nldm_liberty_file: <YOUR_PATH>/
+    gds_file: <YOUR_PATH>/
+    lef_file: <YOUR_PATH>/
+    spice_file: <YOUR_PATH>/
+    verilog_sim: <YOUR_PATH>/
+    corner:
+      pmos: typical
+      nmos: typical
+      temperature: 25 C
+    supplies:
+      VDD: 0.8 V
+      GND: 0 V
+    provides:
+      - lib_type: stdcell
+        vt: RVT
+
+vlsi.inputs:  
+  power_spec_type: "cpf"
+  power_spec_mode: "auto"
+  hierarchical:
+    mode: "leaf"
+  supplies:
+    power: [{name: "VDD", pins: ["VDD"]}] # power (List(Supply)): A list of of all power net(s) in the design
+    ground: [{name: "VSS", pins: ["VSS"]}] # ground (List(Supply)): A list of all ground net(s) in the design
+    VDD: "0.8 V" # VDD (str): The default voltage of the primary power net
+    GND: "0 V" # GND (str): The default voltage of the primary ground net
+  mmmc_corners: [
+      {
+        "name": "PVT_0P8V_25C",
+        "type": "setup",
+        "voltage": "0.8 V",
+        "temp": "25 C"
+      },
+      {
+        "name": "PVT_0P8V_25C",
+        "type": "hold",
+        "voltage": "0.8 V",
+        "temp": "25 C"
+      },
+    ] # mmmc corners config.
+
+  default_output_load: "1 pF" # Default output pin load capacitance.
+  # type: CapacitanceValue
+
+  output_loads: [] # List of output load constraints.
+  # Each item in the list should be a struct with the following members:
+  # name (str) - Name of the output load (e.g. io_out)
+  # load (CapacitanceValue) - Output load capacitance (e.g. "1 pF").
+
+  delays: []

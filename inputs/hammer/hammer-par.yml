@@ -1,0 +1,87 @@
+vlsi.inputs.pin_mode: generated
+vlsi.inputs.pin.generate_mode: semi_auto
+vlsi.inputs.pin.assignments: [
+  {pins: "*", layers: ["M5"], side: "top"}
+]
+
+par.innovus:
+  design_power_effort: "high"
+  design_flow_effort: "standard" # "extreme"
+  signoff: false
+
+par:
+  macro_placement_mode: mixer
+
+vlsi.inputs.power_spec_mode: "auto"
+  
+  # pin_mode: "generated" # Pin placement mode. (str)
+  # # Specifies how to arrange pins for your design.
+  # # Valid options:
+  # # none - This mode lets the CAD tool do whatever it wants (providing no constraints).
+  # #   Typically this is sane but unpredictable.
+  # # generated - Use the assignments list below
+  # # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
+  # pin:
+  #   generate_mode: full_auto # Pin generation modes.
+  #   # type: str
+  #   # Valid options are:
+  #   # - full_auto: auto-place minimum-width pins (intended for digital signals) along a side. This option is the default.
+  #   # - semi_auto: enables the auto-place features above but also optionally allows pin width, depth, and locations to
+  #   #   be manually specified.
+
+  #   assignments: [] # List of PinAssignment Structs.
+  #   #   You must specify pins and one of either preplaced or layers and side.
+  #   # - pins (str) - The name(s) of pins that will be assigned. All current backends support
+  #   #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
+  #   #   start with "io_tl_a".
+  #   # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
+  #   #   One of:
+  #   #   - left, right, top, bottom
+  #   #   - internal: creates an internal pin with `location` as its *center*.
+  #   #     Requires the semi_auto pin generation mode.
+  #   #   If left unspecified, the CAD tool may choose an arbitrary side to use (likely the closest side).
+  #   # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
+  #   # - preplaced (Optional[bool]) - If true, these pins are preplaced by some internal block or macro.
+  #   #   This is telling the tool that these pins are on an internal block and I want them
+  #   #   "placed" where they are currently on the internal block. This can be used for IP
+  #   #   that directly connects to bumps, or signals that will be connected by abutment,
+  #   #   and much more.
+  #   # - location (Optional[Tuple[float, float]]) - specifies the *center* (x, y) location of the pin on the specified
+  #   #   edge.
+  #   #   If side is one of left/right/top/bottom, this specifies the point that lies on the edge that is used for
+  #   #   width/depth control. Below is an example of location if side is "top":
+  #   #
+  #   #   -------X------- (chip/block edge)
+  #   #   |             |
+  #   #   ---------------
+  #   #
+  #   #   If side is "internal", then this specifies the absolute *center* of the
+  #   #   Requires the semi_auto pin generation mode.
+  #   # - width (Optional[float]) - specifies a custom width for the pin. The width direction is orthogonal to the routing
+  #   #   direction.
+  #   #   Requires the semi_auto pin generation mode.
+  #   # - depth (Optional[float]) - specifies a custom depth for the pin. The depth direction is parallel to the routing
+  #   #   direction.
+  #   #   Requires the semi_auto pin generation mode.
+
+vlsi.inputs.decaps: [
+      {
+        "target": "density",
+        "density": 0.1,
+      },
+    ] # List of decap constraints (DecapConstraint struct).
+  # These are used for finer-grained control over how decap cells are placed.
+  # Decap cells can be targeted for a certain density or total capacitance.
+  # A specific area constraint can be specified with x, y, width, and height.
+  # Each item in the list should be a struct with the following members:
+  # target (str) - Targets a specific density or total capacitance. Should be one of:
+  # - "density"
+  # - "capacitance"
+  # density (Optional[Decimal]) - Target density between 0 and 1. Must be used with target: "density".
+  # capacitance (Optional[CapacitanceValue]) - Target total capacitance. Must be used with target: "capacitance".
+  # x (Optional[Decimal]) - x-coordinate of area constraint
+  # y (Optional[Decimal]) - y-coordinate of area constraint
+  # width (Optional[Decimal]) - width of area constraint
+  # height (Optional[Decimal]) - height of area constraint
+  # Note that either none or all of x, y, width, and height must be specified in a constraint struct.
+

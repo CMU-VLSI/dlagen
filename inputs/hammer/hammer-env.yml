@@ -1,0 +1,9 @@
+# Commercial tool licenses/paths
+cadence.CDS_LIC_FILE: <YOUR_LIC_HOST_NAME>/ # Cadence license server/file
+
+# Commercial tool versions/paths
+synthesis.genus.version: "221" # NOTE: for genus/innovus/joules, must specify binary path if version < 221
+par.innovus.version: "221"
+
+synthesis.genus.genus_bin: <YOUR_PATH>/GENUS221/bin/genus
+par.innovus.innovus_bin: <YOUR_PATH>//INNOVUS221/bin/innovus

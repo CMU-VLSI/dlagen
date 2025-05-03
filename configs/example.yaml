@@ -1,0 +1,357 @@
+name: example
+
+output: <YOUR_ABSOLUTE_PATH>
+
+dse:
+    constraints:
+        area: 1
+        latency: 5.0e7
+    stage1:
+        population: 64
+        num_gen: 2
+    stage2:
+        population: 128
+        num_gen: 3
+    stage3:
+        population: 128
+        num_gen: 3
+    stage4:
+        population: 64
+        num_gen: 2
+    target: 'EDP'
+    inf_value: 1.0e32
+    bitwidth:
+        i: 4
+        w: 4
+        o: 4
+    workload: workloads/resnet18.yaml
+    base_accelerator: inputs/hardware.yaml
+    num_core: 64
+    spatial_size_choices: [1, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40]
+    spatial_size_choices_f: [1, 3]
+    mem_size_choices: [131072, 262144, 524288, 786432, 1048576, 1310720, 1572864, 1835008, 2097152, 2359296, 2621440, 2883584, 3145728, 3407872, 3670016]
+    dim_choices: ['x', 'y']
+    flexibility: 'fixed_tf'
+    dataflow: 'output_stationary'
+
+cost_model:
+    energy:
+        unit_sram_sp: 0.3
+        unit_sram_1r1w: 0.3
+        unit_dram: 40
+        unit_mac: 0.477
+    area:
+        mode: simple
+        unit_mac: 2.70595703125e-04
+        unit_sram_sp: 1.62384989563848e-07
+        unit_sram_1r1w: 1.443577484345772e-07
+
+hls:
+    libraries: ['ac_int', 'ac_fixed', 'ac_channel', 'ac_sync', 'ac_array', 'mc_scverify']
+    clock_period: 20
+    catapult:
+        verify: 0
+        binary: <YOUR_PATH>/catapult_synth_2024.2/Mgc_home/bin/catapult
+        env: inputs/tool_env.sh
+        libs:
+            rtlsyntool: DesignCompiler
+            vendor: Nangate
+            technology: 045nm
+            mem: ccs_sample_mem
+            logic: nangate-45nm_beh
+    datatype:
+        base:
+            i:
+                type: 'ac_int'
+                params: [4, 'true']
+            s:
+                type: 'ac_int'
+                params: [8, 'true']
+            w:
+                type: 'ac_int'
+                params: [4, 'true']
+            p:
+                type: 'ac_fixed'
+                params: [24, 12, 'true']
+            o:
+                type: 'ac_int'
+                params: [4, 'true']
+            dma_data:
+                type: 'ac_int'
+                params: [128, 'true']
+        array:
+            l1_i_word:
+                type: i
+                params: [56]
+                reshape_dims: [c_s, ix]
+            l1_o_word:
+                type: o
+                params: [64]
+                reshape_dims: [k_s, ox_s]
+            l1_w_word:
+                type: w
+                params: [384]
+                reshape_dims: [k_s, c_s, fx_s]
+            l1_s_word:
+                type: s
+                params: [128]
+                reshape_dims: [k_s, c_s]
+        struct:
+            dma_info:
+                params: [[index, uint32_t], [length, uint32_t]]
+    hw_graph:
+        class:
+            conv2d_catapult:
+                type: top
+            config:
+                type: config
+            load:
+                type: load
+            l1_i:
+                type: mem
+                ping_pong: True
+                datatype: l1_i_word
+                depth: 4096
+                mem_type: sp
+                catapult_mem_mapping: ccs_sample_mem.ccs_ram_sync_singleport
+                in:
+                    addressible: False
+                    programmable: False
+                    conf_fifo: l1_i_in_conf
+                out:
+                    addressible: True
+                    programmable: False
+                    xyz: 'y'
+                    loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    compute_loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    mem_order: [ox_t, iy, c_t]
+                    conf_fifo: l1_i_out_conf
+            l1_w:
+                type: mem
+                ping_pong: True
+                datatype: l1_w_word
+                depth: 512
+                mem_type: sp
+                catapult_mem_mapping: ccs_sample_mem.ccs_ram_sync_singleport
+                in:
+                    addressible: False
+                    programmable: False
+                    conf_fifo: l1_w_in_conf
+                out:
+                    addressible: True
+                    programmable: False
+                    loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    compute_loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    mem_order: [fy_t, c_t]
+                    conf_fifo: l1_w_out_conf
+            l1_s:
+                type: mem
+                ping_pong: False
+                datatype: l1_s_word
+                depth: 256
+                mem_type: sp
+                catapult_mem_mapping: ccs_sample_mem.ccs_ram_sync_singleport
+                in:
+                    addressible: False
+                    programmable: False
+                    conf_fifo: l1_s_in_conf
+                out:
+                    addressible: True
+                    programmable: False
+                    loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    compute_loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    mem_order: [c_t]
+                    conf_fifo: l1_s_out_conf
+            compute:
+                type: compute
+                xyz: x
+                all_xyz: xy
+                sizes: [16, 8, 4, 3]
+                loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                residual: res_in
+                scale_dim: 'kc'
+                custom_functions: [inputs/int5_to_fp4.h, 
+                    inputs/mul_fp4.h]
+                catapult_cluster: True
+            l1_o:
+                type: mem
+                ping_pong: True
+                datatype: l1_o_word
+                depth: 2048
+                mem_type: sp
+                catapult_mem_mapping: ccs_sample_mem.ccs_ram_sync_singleport
+                in:
+                    addressible: True
+                    programmable: False
+                    loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    compute_loop_order: [['ox_t', 100], ['oy_t', 100], ['fy_t', 5], ['c_t', 512]]
+                    mem_order: [ox_t, oy_t]
+                    conf_fifo: l1_o_in_conf
+                out:
+                    addressible: False
+                    programmable: False
+                    conf_fifo: l1_o_out_conf
+            store:
+                type: store
+        fifo:
+            global_conf:
+                type: conf
+                src: conv2d_catapult
+                dst: config
+            dma_read_ctrl:
+                type: data
+                datatype: dma_info
+                src: conv2d_catapult
+                dst: load
+            dma_read_chnl:
+                type: data
+                datatype: dma_data
+                src: conv2d_catapult
+                dst: load
+            acc_load_done:
+                type: handshake
+                src: conv2d_catapult
+                dst: load
+            load_conf:
+                type: conf
+                src: config
+                dst: load
+            l1_i_in_conf:
+                type: conf
+                src: config
+                dst: l1_i
+            l1_i_out_conf:
+                type: conf
+                src: config
+                dst: l1_i
+            l1_w_in_conf:
+                type: conf
+                src: config
+                dst: l1_w
+            l1_w_out_conf:
+                type: conf
+                src: config
+                dst: l1_w
+            l1_s_in_conf:
+                type: conf
+                src: config
+                dst: l1_s
+            l1_s_out_conf:
+                type: conf
+                src: config
+                dst: l1_s
+            compute_conf:
+                type: conf
+                src: config
+                dst: compute
+            l1_o_in_conf:
+                type: conf
+                src: config
+                dst: l1_o
+            l1_o_out_conf:
+                type: conf
+                src: config
+                dst: l1_o
+            store_conf:
+                type: conf
+                src: config
+                dst: store
+            l1_i_in:
+                type: loadable
+                datatype: l1_i_word
+                src: load
+                dst: l1_i
+            l1_w_in:
+                type: loadable
+                datatype: l1_w_word
+                src: load
+                dst: l1_w
+            l1_s_in:
+                type: loadable
+                datatype: l1_s_word
+                src: load
+                dst: l1_s
+                load_once: True
+            res_in:
+                type: loadable
+                datatype: l1_o_word
+                src: load
+                dst: compute
+            l1_i_out:
+                type: data
+                datatype: l1_i_word
+                src: l1_i
+                dst: compute
+            l1_w_out:
+                type: data
+                datatype: l1_w_word
+                src: l1_w
+                dst: compute
+            l1_s_out:
+                type: data
+                datatype: l1_s_word
+                src: l1_s
+                dst: compute
+            l1_o_in:
+                type: data
+                datatype: l1_o_word
+                src: compute
+                dst: l1_o
+            l1_o_out:
+                type: loadable
+                datatype: l1_o_word
+                src: l1_o
+                dst: store
+                output: True
+            dma_write_ctrl:
+                type: data
+                datatype: dma_info
+                src: store
+                dst: conv2d_catapult
+            dma_write_chnl:
+                type: data
+                datatype: dma_data
+                src: store
+                dst: conv2d_catapult
+            acc_done:
+                type: handshake
+                src: conv2d_catapult
+                dst: store
+
+vlsi:
+    hammer:
+        base_configs: inputs/hammer/
+        technology: n16
+    sram:
+        library:
+            -   name: spmb
+                type: sp
+                compiler:
+                    script: <YOUR_PATH>
+                    config_format: f'{depth}x{width}_{cm}'
+                verilog_path: myramlib{depth}x{width}_{cm}/VERILOG/myramlib{depth}x{width}_{cm}.v
+                module: MYRAMLIB{depth}x{width}_{cm}
+                timing_path: myramlib{depth}x{width}_{cm}/LIB/myramlib{depth}x{width}_{cm}.lib
+                spice_path: myramlib{depth}x{width}_{cm}/SPI/myramlib{depth}x{width}_{cm}.spi
+                lef_path: myramlib{depth}x{width}_{cm}/LEF/myramlib{depth}x{width}_{cm}.lef
+                gds_path: myramlib{depth}x{width}_{cm}/GDS/myramlib{depth}x{width}_{cm}.gds
+                ports:
+                    clk: CLK
+                    enb: CEB
+                    web: WEB
+                    adr: A
+                    d: D
+                    q: Q
+                    specific:
+                        - [<NAME>, 2'b01]
+                        - [<NAME>, 2'b01]
+        macro:
+            -   lib: sp
+                cm: 4
+                width: [8, 144, 1]
+                depth: [512, 4096, 32]
+            -   lib: sp
+                cm: 8
+                width: [4, 72, 1]
+                depth: [1024, 8192, 64]
+
