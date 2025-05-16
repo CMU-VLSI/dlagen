@@ -17,7 +17,7 @@ class CatapultMacArray(CatapultClass):
 		self.loop_order = [(updated_names[i], self.loop_order[i][1]) for i in range(len(self.loop_order))]
 
 		self.rf_accum_loops = {}
-		self.rf_accum_loops['s'] = [f'f{self.xyz}_s', f'o{self.xyz}_s']
+		self.rf_accum_loops['s'] = [f'f{self.xyz}_s', f'c_s']
 		self.rf_accum_loops['t'] = []
 		for loop in self.loop_order[::-1]:
 			if 'o' in loop[0]:
