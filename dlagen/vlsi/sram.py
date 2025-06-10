@@ -90,7 +90,8 @@ class SramMacro():
 					ports_str += f'.{p[0]}({p[1]}), '
 			elif p_rtl == 'd' and width_range:
 				ports_str += f'.{p_sram}({p_rtl}[{width_range}]), '
-			elif p_rtl == 'q' and (width_range or addr_range):
+			# elif p_rtl == 'q' and (width_range or addr_range):
+			elif p_rtl == 'q':
 				ports_str += f'.{p_sram}(q_{inst_name}), '
 			elif p_rtl == 'adr' and addr_range:
 				ports_str += f'.{p_sram}({p_rtl}[{addr_range}]), '

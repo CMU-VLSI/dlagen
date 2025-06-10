@@ -83,10 +83,10 @@ class SramMapper():
 		outstr.append(f'input [{width-1}:0] d;')
 		outstr.append('input en;')
 		outstr.append('input we;')
-		outstr.append('logic enb;')
-		outstr.append('logic web;')
 		outstr.append('input clk;')
 		outstr.append(f'output [{width-1}:0] q;')
+		outstr.append('logic enb;')
+		outstr.append('logic web;')
 		outstr.append("assign enb = ~en;")
 		outstr.append("assign web = ~we;")
 
@@ -132,6 +132,10 @@ class SramMapper():
 				mux_str.unindent()
 				mux_str.append('end')
 				outstr.insert(mux_str)
+				if col_id == 0:
+					q_assign_str = f'q_{col_id}' + q_assign_str
+				else:
+					q_assign_str = f'q_{col_id}, ' + q_assign_str
 			cur_width += macro.width
 
 		if q_assign_str != '':
